@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SPS V3 — Samurai Performance System</title>
+  <style>
+    :root{
+      --bg:#0b0d10; --panel:#0f131a; --card:#121826; --muted:#9aa4b2;
+      --text:#e7eefc; --accent:#f5c542; --danger:#ff5a6a; --ok:#2bd576;
+      --stroke:rgba(255,255,255,.08);
+      --r:18px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:radial-gradient(1200px 700px at 20% -10%,rgba(245,197,66,.14),transparent 60%),var(--bg);color:var(--text)}
+    header{
+      position:sticky;top:0;z-index:9;
+      background:linear-gradient(180deg,rgba(11,13,16,.95),rgba(11,13,16,.70));
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--stroke);
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{
+      width:42px;height:42px;border-radius:14px;
+      background:linear-gradient(135deg,rgba(245,197,66,.95),rgba(245,197,66,.35));
+      box-shadow:0 10px 30px rgba(245,197,66,.18);
+    }
+    h1{font-size:16px;margin:0}
+    .sub{font-size:12px;color:var(--muted)}
+    .spacer{flex:1}
+    .btn{
+      border:1px solid var(--stroke); background:rgba(255,255,255,.04);
+      color:var(--text); padding:10px 14px; border-radius:14px;
+      cursor:pointer; font-weight:650;
+    }
+    .btn.primary{background:rgba(245,197,66,.14);border-color:rgba(245,197,66,.35)}
+    .btn:active{transform:translateY(1px)}
+    .tabs{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+    .tab{
+      padding:10px 12px;border-radius:14px;border:1px solid var(--stroke);
+      color:var(--muted);cursor:pointer;user-select:none
+    }
+    .tab.active{color:var(--text);background:rgba(255,255,255,.05)}
+    main{padding:18px 0}
+    .grid{display:grid;gap:12px}
+    @media(min-width:900px){.grid.cols3{grid-template-columns:repeat(3,1fr)}}
+    @media(min-width:900px){.grid.cols2{grid-template-columns:repeat(2,1fr)}}
+    .card{
+      background:linear-gradient(180deg,rgba(18,24,38,.96),rgba(15,19,26,.96));
+      border:1px solid var(--stroke); border-radius:var(--r); padding:14px;
+      box-shadow:0 12px 40px rgba(0,0,0,.22);
+    }
+    .card h2{margin:0 0 8px 0;font-size:14px}
+    .kpi{font-size:22px;font-weight:800}
+    .muted{color:var(--muted);font-size:12px}
+    .list{margin:10px 0 0 0;padding:0;list-style:none}
+    .list li{
+      display:flex;justify-content:space-between;gap:10px;
+      padding:10px;border:1px solid var(--stroke);border-radius:14px;
+      background:rgba(255,255,255,.03);margin-bottom:8px
+    }
+    .pill{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--stroke);color:var(--muted)}
+    .pill.ok{border-color:rgba(43,213,118,.35);color:rgba(43,213,118,.95)}
+    .pill.warn{border-color:rgba(245,197,66,.35);color:rgba(245,197,66,.95)}
+    .pill.bad{border-color:rgba(255,90,106,.35);color:rgba(255,90,106,.95)}
+    .field{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+    label{font-size:12px;color:var(--muted)}
+    input,select,textarea{
+      background:rgba(255,255,255,.03);color:var(--text);
+      border:1px solid var(--stroke);border-radius:14px;padding:10px 12px;outline:none
+    }
+    textarea{min-height:90px;resize:vertical}
+    .two{display:grid;gap:10px}
+    @media(min-width:700px){.two{grid-template-columns:1fr 1fr}}
+    .toast{
+      position:fixed;right:16px;bottom:16px;z-index:99;
+      padding:12px 14px;border-radius:14px;border:1px solid var(--stroke);
+      background:rgba(18,24,38,.96);box-shadow:0 12px 40px rgba(0,0,0,.3);
+      display:none;max-width:320px
+    }
+    .toast.show{display:block}
+    .tiny{font-size:11px;color:var(--muted);line-height:1.4}
+    .hr{height:1px;background:var(--stroke);margin:10px 0}
+    .right{display:flex;gap:8px;align-items:center}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="row">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>SPS V3 — Samurai Performance System</h1>
+          <div class="sub">APC: Avaliar • Planejar • Controlar (carga Mista: WL + kcal + UA)</div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn primary" id="btnPrimary">+ Nova Sessão (demo)</button>
+      <button class="btn" id="btnBackup">Backup</button>
+    </div>
+
+    <div class="tabs" id="tabs"></div>
+  </div>
+</header>
+
+<main class="wrap" id="view"></main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/** SPS V3 — Demo local (V1 do nosso projeto). Tudo em localStorage por enquanto. */
+const LS_KEY = "spsv3_demo_v1";
+
+const state = load() ?? seed();
+
+const TABS = [
+  {id:"dash", label:"Dashboard"},
+  {id:"coach", label:"Professor"},
+  {id:"students", label:"Alunos"},
+  {id:"evaluate", label:"Avaliar"},
+  {id:"plan", label:"Planejar"},
+  {id:"control", label:"Controlar"},
+  {id:"config", label:"Config"},
+];
+
+let currentTab = "dash";
+
+function seed(){
+  return {
+    coach: { name:"", email:"", whatsapp:"", lgpdAccepted:false },
+    students: [],
+    sessions: [],
+    microcycles: [],
+    prefs: {
+      rpeScale:"CR10",
+      goals: { kcalPerSession:300, kcalPerWeek:2000, maxMinSession:75, maxSessionsWeek:6 }
+    }
+  };
+}
+
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch{ return null; } }
+
+function toast(msg){
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"), 2200);
+}
+
+function $(sel){ return document.querySelector(sel); }
+function el(tag, attrs={}, children=[]){
+  const n = document.createElement(tag);
+  for(const [k,v] of Object.entries(attrs)){
+    if(k==="class") n.className = v;
+    else if(k.startsWith("on") && typeof v==="function") n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v);
+  }
+  for(const c of children){
+    if(typeof c==="string") n.appendChild(document.createTextNode(c));
+    else n.appendChild(c);
+  }
+  return n;
+}
+
+function renderTabs(){
+  const wrap = $("#tabs");
+  wrap.innerHTML = "";
+  for(const t of TABS){
+    wrap.appendChild(el("div",{class:"tab"+(t.id===currentTab?" active":""), onclick:()=>{currentTab=t.id; render();}},[t.label]));
+  }
+}
+
+function calcUA(rpe, minutes){ return Math.round((Number(rpe)||0) * (Number(minutes)||0)); }
+
+function render(){
+  renderTabs();
+  const view = $("#view");
+  view.innerHTML = "";
+
+  if(currentTab==="dash") return view.appendChild(renderDashboard());
+  if(currentTab==="coach") return view.appendChild(renderCoach());
+  if(currentTab==="students") return view.appendChild(renderStudents());
+  if(currentTab==="evaluate") return view.appendChild(renderEvaluate());
+  if(currentTab==="plan") return view.appendChild(renderPlan());
+  if(currentTab==="control") return view.appendChild(renderControl());
+  if(currentTab==="config") return view.appendChild(renderConfig());
+}
+
+function renderDashboard(){
+  const weekKcal = 0; // vamos implementar na Sprint 2
+  const weekUA = state.sessions.reduce((acc,s)=>acc + (s.ua||0), 0);
+  const students = state.students.length;
+
+  const c = el("div",{class:"grid cols3"},[
+    el("div",{class:"card"},[
+      el("h2",{},["Alunos"]),
+      el("div",{class:"kpi"},[String(students)]),
+      el("div",{class:"muted"},["Cadastro e convite (Sprint 2)"]),
+    ]),
+    el("div",{class:"card"},[
+      el("h2",{},["Carga interna (UA) — demo"]),
+      el("div",{class:"kpi"},[String(weekUA)]),
+      el("div",{class:"muted"},["UA = CR10 × minutos (pós-treino)"]),
+    ]),
+    el("div",{class:"card"},[
+      el("h2",{},["Kcal semana (em breve)"]),
+      el("div",{class:"kpi"},["—"]),
+      el("div",{class:"muted"},["Motor kcal entra no Planejar/Controlar"]),
+    ]),
+  ]);
+
+  const next = el("div",{class:"card", style:"margin-top:12px"},[
+    el("h2",{},["Próximos itens"]),
+    state.sessions.length===0
+      ? el("div",{class:"muted"},["Sem sessões ainda. Clique em “+ Nova Sessão (demo)”."])
+      : el("ul",{class:"list"}, state.sessions.slice(-5).reverse().map(s=>(
+        el("li",{},[
+          el("div",{},[
+            el("div",{},[s.title || "Sessão"]),
+            el("div",{class:"muted"},[`Min: ${s.minutes} • CR10: ${s.rpe} • UA: ${s.ua}`]),
+          ]),
+          el("span",{class:"pill ok"},["registrada"])
+        ])
+      )))
+  ]);
+
+  return el("div",{},[c,next]);
+}
+
+function renderCoach(){
+  const f = el("div",{class:"card"},[
+    el("h2",{},["Professor — dados + LGPD"]),
+    el("div",{class:"two"},[
+      field("Nome completo","text","coach_name", state.coach.name),
+      field("E-mail","email","coach_email", state.coach.email),
+      field("WhatsApp","tel","coach_whats", state.coach.whatsapp),
+      el("div",{class:"field"},[
+        el("label",{},["LGPD — Consentimento"]),
+        el("div",{class:"row"},[
+          el("input",{type:"checkbox", id:"coach_lgpd", ...(state.coach.lgpdAccepted?{checked:"checked"}:{})}),
+          el("div",{class:"tiny"},["Confirmo que li e aceito os Termos e a Política de Privacidade para operar o SPS V3."]),
+        ])
+      ]),
+    ]),
+    el("div",{class:"row"},[
+      el("button",{class:"btn primary", onclick:()=>{
+        state.coach.name = $("#coach_name").value.trim();
+        state.coach.email = $("#coach_email").value.trim();
+        state.coach.whatsapp = $("#coach_whats").value.trim();
+        state.coach.lgpdAccepted = $("#coach_lgpd").checked;
+        save(); toast("Professor salvo.");
+      }},["Salvar"]),
+      el("span",{class:"muted"},["Sprint 1: aqui. Sprint 2: verificação e convite por e-mail."])
+    ])
+  ]);
+  return f;
+}
+
+function renderStudents(){
+  const card = el("div",{class:"card"},[
+    el("h2",{},["Alunos — cadastro local (demo)"]),
+    el("div",{class:"two"},[
+      field("Nome do aluno","text","st_name",""),
+      field("E-mail (opcional)","email","st_email",""),
+      field("Peso (kg)","number","st_weight","70"),
+      field("Objetivo","text","st_goal","Emagrecimento"),
+    ]),
+    el("button",{class:"btn primary", onclick:()=>{
+      const name = $("#st_name").value.trim();
+      if(!name) return toast("Digite o nome do aluno.");
+      const st = {
+        id: crypto.randomUUID(),
+        name,
+        email: $("#st_email").value.trim(),
+        weightKg: Number($("#st_weight").value||0),
+        goal: $("#st_goal").value.trim(),
+        createdAt: new Date().toISOString()
+      };
+      state.students.push(st);
+      save();
+      $("#st_name").value=""; $("#st_email").value="";
+      toast("Aluno cadastrado.");
+      render();
+    }},["Cadastrar aluno"]),
+    el("div",{class:"hr"}),
+    state.students.length===0
+      ? el("div",{class:"muted"},["Nenhum aluno cadastrado ainda."])
+      : el("ul",{class:"list"}, state.students.map(s=>(
+        el("li",{},[
+          el("div",{},[
+            el("div",{},[s.name]),
+            el("div",{class:"muted"},[`Peso: ${s.weightKg||"—"}kg • Objetivo: ${s.goal||"—"}`]),
+          ]),
+          el("span",{class:"pill warn"},["local"])
+        ])
+      )))
+  ]);
+  return card;
+}
+
+function renderEvaluate(){
+  return el("div",{class:"card"},[
+    el("h2",{},["Avaliar — (Sprint 3)"]),
+    el("div",{class:"muted"},[
+      "Aqui entra: triagem + medidas + testes (Jump/VBT/1RM/e1RM).",
+      " Hoje estamos com um demo básico no cadastro do aluno."
+    ])
+  ]);
+}
+
+function renderPlan(){
+  const g = state.prefs.goals;
+  return el("div",{class:"grid cols2"},[
+    el("div",{class:"card"},[
+      el("h2",{},["Planejar — metas energéticas (kcal)"]),
+      field("Kcal alvo por sessão","number","kcal_sess", String(g.kcalPerSession)),
+      field("Kcal alvo por semana","number","kcal_week", String(g.kcalPerWeek)),
+      field("Máx. minutos por sessão","number","max_min", String(g.maxMinSession)),
+      field("Máx. sessões por semana","number","max_week", String(g.maxSessionsWeek)),
+      el("button",{class:"btn primary", onclick:()=>{
+        g.kcalPerSession = Number($("#kcal_sess").value||0);
+        g.kcalPerWeek = Number($("#kcal_week").value||0);
+        g.maxMinSession = Number($("#max_min").value||0);
+        g.maxSessionsWeek = Number($("#max_week").value||0);
+        save(); toast("Metas salvas.");
+      }},["Salvar metas"]),
+      el("div",{class:"tiny", style:"margin-top:8px"},[
+        "No V3: cada sessão sempre mostra kcal alvo/estimada/gap.",
+        " A onda 7 sessões e o motor misto (WL+kcal) entram na Sprint 4."
+      ])
+    ]),
+    el("div",{class:"card"},[
+      el("h2",{},["Periodização (Sprint 4)"]),
+      el("div",{class:"muted"},[
+        "Modelos: Linear, Reversa, DUP, Blocos, Complexa.",
+        " Onda (%) em todas as sessões e modo Misto (kcal mestre ou WL mestre)."
+      ])
+    ])
+  ]);
+}
+
+function renderControl(){
+  return el("div",{class:"card"},[
+    el("h2",{},["Controlar — Pós-treino (demo)"]),
+    el("div",{class:"muted"},["Crie sessões no botão superior “+ Nova Sessão (demo)” e veja UA no dashboard."]),
+    el("div",{class:"tiny", style:"margin-top:8px"},[
+      "Sprint 6: aqui vira real (CR10 + dor + minutos) e calcula UA/WL/kcal + semana."
+    ])
+  ]);
+}
+
+function renderConfig(){
+  return el("div",{class:"card"},[
+    el("h2",{},["Config"]),
+    el("div",{class:"tiny"},[
+      "Backup/export e import entram aqui. Hoje temos um botão “Backup” no topo que salva JSON."
+    ]),
+    el("div",{class:"hr"}),
+    el("button",{class:"btn", onclick:()=>{
+      if(confirm("Resetar dados locais deste demo?")){ localStorage.removeItem(LS_KEY); location.reload(); }
+    }},["Resetar demo"]),
+  ]);
+}
+
+function field(labelText, type, id, value){
+  return el("div",{class:"field"},[
+    el("label",{for:id},[labelText]),
+    el("input",{type, id, value})
+  ]);
+}
+
+// Botões topo
+$("#btnPrimary").addEventListener("click", ()=>{
+  // cria uma sessão demo para ver UA
+  const s = {
+    id: crypto.randomUUID(),
+    title: "Sessão (demo)",
+    minutes: 45,
+    rpe: 5,
+    ua: calcUA(5,45),
+    createdAt: new Date().toISOString()
+  };
+  state.sessions.push(s);
+  save();
+  toast("Sessão demo criada.");
+  render();
+});
+
+$("#btnBackup").addEventListener("click", ()=>{
+  const payload = JSON.stringify({exportedAt:new Date().toISOString(), data: state}, null, 2);
+  const blob = new Blob([payload], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "spsv3-backup.json";
+  a.click();
+  toast("Backup baixado.");
+});
+
+render();
+</script>
+</body>
+</html>
