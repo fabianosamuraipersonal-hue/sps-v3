@@ -117,9 +117,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/** SPS V3 — Demo local (V1 do nosso projeto). Tudo em localStorage por enquanto. */
 const LS_KEY = "spsv3_demo_v1";
-
 const state = load() ?? seed();
 
 const TABS = [
@@ -140,10 +138,7 @@ function seed(){
     students: [],
     sessions: [],
     microcycles: [],
-    prefs: {
-      rpeScale:"CR10",
-      goals: { kcalPerSession:300, kcalPerWeek:2000, maxMinSession:75, maxSessionsWeek:6 }
-    }
+    prefs: { rpeScale:"CR10", goals: { kcalPerSession:300, kcalPerWeek:2000, maxMinSession:75, maxSessionsWeek:6 } }
   };
 }
 
@@ -237,7 +232,7 @@ function renderDashboard(){
 }
 
 function renderCoach(){
-  const f = el("div",{class:"card"},[
+  return el("div",{class:"card"},[
     el("h2",{},["Professor — dados + LGPD"]),
     el("div",{class:"two"},[
       field("Nome completo","text","coach_name", state.coach.name),
@@ -262,7 +257,6 @@ function renderCoach(){
       el("span",{class:"muted"},["Sprint 1: aqui. Sprint 2: verificação e convite por e-mail."])
     ])
   ]);
-  return f;
 }
 
 function renderStudents(){
@@ -361,9 +355,7 @@ function renderControl(){
 function renderConfig(){
   return el("div",{class:"card"},[
     el("h2",{},["Config"]),
-    el("div",{class:"tiny"},[
-      "Backup/export e import entram aqui. Hoje temos um botão “Backup” no topo que salva JSON."
-    ]),
+    el("div",{class:"tiny"},["Backup/export e import entram aqui. Hoje temos um botão “Backup” no topo que salva JSON."]),
     el("div",{class:"hr"}),
     el("button",{class:"btn", onclick:()=>{
       if(confirm("Resetar dados locais deste demo?")){ localStorage.removeItem(LS_KEY); location.reload(); }
@@ -378,9 +370,7 @@ function field(labelText, type, id, value){
   ]);
 }
 
-// Botões topo
 $("#btnPrimary").addEventListener("click", ()=>{
-  // cria uma sessão demo para ver UA
   const s = {
     id: crypto.randomUUID(),
     title: "Sessão (demo)",
@@ -408,7 +398,6 @@ $("#btnBackup").addEventListener("click", ()=>{
 render();
 </script>
 
-<!-- Register Service Worker (PWA) -->
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
