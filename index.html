@@ -4,9 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SPS V3 — Samurai Performance System</title>
+
+  <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0b0d10">
-<link rel="icon" href="icon-192.png">
+  <meta name="theme-color" content="#0b0d10">
+  <link rel="icon" href="icon-192.png">
+
   <style>
     :root{
       --bg:#0b0d10; --panel:#0f131a; --card:#121826; --muted:#9aa4b2;
@@ -194,7 +197,6 @@ function render(){
 }
 
 function renderDashboard(){
-  const weekKcal = 0; // vamos implementar na Sprint 2
   const weekUA = state.sessions.reduce((acc,s)=>acc + (s.ua||0), 0);
   const students = state.students.length;
 
@@ -402,13 +404,16 @@ $("#btnBackup").addEventListener("click", ()=>{
   a.click();
   toast("Backup baixado.");
 });
+
 render();
 </script>
-  <script>
+
+<!-- Register Service Worker (PWA) -->
+<script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
   }
 </script>
+
 </body>
 </html>
-
