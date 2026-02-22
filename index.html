@@ -4,6 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SPS V3 — Samurai Performance System</title>
+  <link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b0d10">
+<link rel="icon" href="icon-192.png">
   <style>
     :root{
       --bg:#0b0d10; --panel:#0f131a; --card:#121826; --muted:#9aa4b2;
@@ -399,8 +402,13 @@ $("#btnBackup").addEventListener("click", ()=>{
   a.click();
   toast("Backup baixado.");
 });
-
 render();
+</script>
+  <script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
+  }
 </script>
 </body>
 </html>
+
